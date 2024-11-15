@@ -25,12 +25,12 @@ mongoClient.connect(conStr).then(clientObject=>{
     })
 
     app.get("/users/:id",(req,res)=>{
-        db.collection('users').find({email:req.params.id})
+        db.collection('users').find({email:req.params.id+'.com'})
         .toArray().then(users=>{res.send(users[0])})
     })
 
     app.put('/updateuser/:id',(req,res)=>{
-        const fil={email:req.params.id}
+        const fil={id:req.params.id}
         db.collection('users').updateOne(fil,{$set:req.body})
         .then(data=>res.send(data))
     })
