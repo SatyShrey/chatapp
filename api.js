@@ -8,8 +8,8 @@ const cors=require("cors")
 app.use(cors())
 
 const mongoClient=require("mongodb").MongoClient
-//const conStr="mongodb://127.0.0.1:27017"
-const conStr='mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net'
+const conStr="mongodb://127.0.0.1:27017"
+//const conStr='mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net'
 
 
 app.get('/',(req,res)=>{
