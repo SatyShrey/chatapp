@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 
 const express=require("express")
 const app=express()
@@ -7,7 +8,8 @@ const cors=require("cors")
 app.use(cors())
 
 const mongoClient=require("mongodb").MongoClient
-const conStr="mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net"
+//const conStr="mongodb://127.0.0.1:27017"
+const conStr='mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net'
 
 
 app.get('/',(req,res)=>{
@@ -49,10 +51,10 @@ mongoClient.connect(conStr).then(clientObject=>{
     })
 
     app.get('/userlist/:id',(req,res)=>{
-        db.collection('chats').find({p1:req.params.id},{p2:req.params.id}).toArray().then(data=>{
+        db.collection('chats').find({$or:[{p1:req.params.id},{p2:req.params.id}]}).toArray().then(data=>{
             let a=[]
-           data.map(d=>{if(d.p1===req.params.id){a.push(d.p2)}else{a.push(d.p1)}})
-           let b=[...new Set(a)]
+           data.map(d=>{a.push(d.p2);a.push(d.p1)})
+           let b=[...new Set(a)].filter(f=>f !=req.params.id)
            res.send(b)
         })
     })
