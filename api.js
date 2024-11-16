@@ -11,8 +11,7 @@ app.use(cors())
 const http=require("http")
 const {Server}=require("socket.io")
 const server=http.createServer(app)
-let site="http://localhost:5173"
-//site="satyaatweb3todo.netlify.app"
+site="https://gglchat.netlify.app"
 const io=new Server(server,{cors:{origin:site,methods:["GET","POST"]}})
 let userArray=[];
 
