@@ -8,26 +8,8 @@ const cors=require("cors")
 app.use(cors())
 
 
-const http=require("http")
-const {Server}=require("socket.io")
-const server=http.createServer(app)
-site="https://gglchat.netlify.app"
-const io=new Server(server,{cors:{origin:site,methods:["GET","POST"]}})
-let userArray=[];
-
-io.on('connection',(socket)=>{
-    const a=socket.handshake.auth.id
-    if(userArray.includes(a)===false){userArray.push(a)}
-    socket.emit('data',userArray)
-    socket.on('disconnect',()=>{
-        socket.broadcast.emit('data',userArray.filter(f=>f!==a))
-    })
-})
-
-
 const mongoClient=require("mongodb").MongoClient
-let conStr="mongodb://127.0.0.1:27017"
-conStr='mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net'
+const conStr='mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net'
 
 
 app.get('/',(req,res)=>{
@@ -79,7 +61,4 @@ mongoClient.connect(conStr).then(clientObject=>{
 
 })
 
-
-
 app.listen(6060,()=>{console.log("mongo started")})
-server.listen(6070,()=>{console.log('io started')})
