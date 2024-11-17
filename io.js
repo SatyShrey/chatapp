@@ -21,18 +21,21 @@ const conStr = 'mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongo
 //const conStr="mongodb://127.0.0.1:27017"
 
 app.get('/', (req, res) => {
-    res.send("Hi Satya.")
+    res.send("This is an API.")
 })
 
-mongoClient.connect(conStr).then(clientObject => {
-    var db = clientObject.db('gglchats')
-
-    io.on('connection', (socket) => {
+ io.on('connection', (socket) => {
         let a = socket.handshake.auth.id
         socket.on('disconnect', () => {
-            db.collection('users').updateOne({ id: a }, { $set: { status: "offline" } })
+            mongoClient.connect(conStr).then(clientObject => {
+               const db = clientObject.db('gglchats')
+               db.collection('users').updateOne({ id: a }, { $set: { status: "offline" } })  
+          }) 
         })
     })
+
+mongoClient.connect(conStr).then(clientObject => {
+    const db = clientObject.db('gglchats')
 
     app.get("/users", (req, res) => {
         db.collection('users').find({}).toArray()
