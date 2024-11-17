@@ -30,7 +30,7 @@ mongoClient.connect(conStr).then(clientObject => {
     io.on('connection', (socket) => {
         let a = socket.handshake.auth.id
         socket.on('disconnect', () => {
-            db.collection('users').updateOne({ uid: a }, { $set: { status: "offline" } })
+            db.collection('users').updateOne({ id: a }, { $set: { status: "offline" } })
         })
     })
 
