@@ -73,8 +73,8 @@ mongoClient.connect(conStr).then(clientObject => {
         let arr = []
         db.collection('chats').find({ $or: [{ p1: req.params.id }, { p2: req.params.id }] }).toArray().then(data => {
             data.forEach(a => {
-                if (a.p1 === req.params.id) { if (arr.includes(a.p2) === false) { arr.push(a.p2) } }
-                else { if (arr.includes(a.p1 === false)) { arr.push(a.p1) } } 
+                if(a.p1===req.params.id){if(arr.includes(a.p2)==false){arr.push(a.p2)}}
+                else if(a.p2===req.params.id){if(arr.includes(a.p1)===false){arr.push(a.p1)}}
             })
         }).then(()=>{
             db.collection("users").find({ id: { $in: arr } }).toArray()
