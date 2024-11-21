@@ -7,36 +7,73 @@ app.use(express.json())
 const cors = require("cors")
 app.use(cors())
 
+//...................socket.io global variables..................
 const http = require("http")
 const { Server } = require("socket.io")
 const server = http.createServer(app)
 const origin = 'https://gglchat.netlify.app'
 //const origin="http://localhost:5173"
 const io = new Server(server, { cors: { origin: origin } })
+let userArray=[]
 
-//..........................mongodb..................................
 
+//..........................mongodb global variables..................................
 const mongoClient = require("mongodb").MongoClient
 const conStr = 'mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net'
 //const conStr="mongodb://127.0.0.1:27017"
 
+//.........default page.....................
 app.get('/', (req, res) => {
-    res.send("This is an API.")
+    res.send("Hi, this is an web api for chat application using NodeJS.")
 })
 
- io.on('connection', (socket) => {
-        let a = socket.handshake.auth.id
-        socket.on('disconnect', () => {
-            mongoClient.connect(conStr).then(clientObject => {
-               const db = clientObject.db('gglchats')
-               db.collection('users').updateOne({ id: a }, { $set: { status: "offline" } })  
-          }) 
-        })
+mongoClient.connect(conStr).then(clientObject => {
+    var db = clientObject.db('gglchats')
+
+    //............socket.io.....................
+    io.on('connection', (socket) => {
+        let a = socket.handshake.auth.id//receive the google user uid as 'a'
+        userArray=[...new Set([...userArray,a])]
+        io.emit("online-users",userArray)
+    
+    //update socket id
+     app.put('/updatesocket/:id',(req,res)=>{
+        db.collection('users').updateOne({id:req.params.id},{$set:req.body})
+        .then(data=>res.send(data))
+     })
+
+    //add chat to database and emit to the receiver
+    app.post('/addchat/:id', (req, res) => {
+        db.collection('chats').insertOne(req.body)
+            .then(data => {
+                res.send(data)
+                io.to(req.params.id).emit('receive',req.body)
+            })
     })
 
-mongoClient.connect(conStr).then(clientObject => {
-    const db = clientObject.db('gglchats')
+    //..............add a new user...................
+    app.post('/setuser', (req, res) => {
+        db.collection('users').insertOne(req.body)
+            .then(data => res.send(data))
+    })
 
+    //.............update an user...................
+    app.put('/updateuser/:id', (req, res) => {
+        db.collection('users').updateOne({ id: req.params.id }, { $set: req.body })
+            .then(data => {res.send(data)})
+    })
+
+    //...............executed on disconnect of a client............................
+        socket.on('disconnect', () => {
+            db.collection('users').updateOne({ id: a }, { $set: { status: "offline" } })
+            userArray=userArray.filter(f=>f!==a)
+        })
+
+    })
+
+
+
+//...................codes that can be executed without web socket connection.....................
     app.get("/users", (req, res) => {
         db.collection('users').find({}).toArray()
             .then(users => { res.send(users) })
@@ -54,16 +91,6 @@ mongoClient.connect(conStr).then(clientObject => {
 
     app.put('/updateuser/:id', (req, res) => {
         db.collection('users').updateOne({ id: req.params.id }, { $set: req.body })
-            .then(data => res.send(data))
-    })
-
-    app.post('/setuser', (req, res) => {
-        db.collection('users').insertOne(req.body)
-            .then(data => res.send(data))
-    })
-
-    app.post('/addchat', (req, res) => {
-        db.collection('chats').insertOne(req.body)
             .then(data => res.send(data))
     })
 
@@ -87,4 +114,5 @@ mongoClient.connect(conStr).then(clientObject => {
 
 })
 
-server.listen(6060, () => { console.log('io started') })
+//..............listen to the server at port 6060..................
+server.listen(6060, () => { console.log('io started:6060') })
