@@ -11,8 +11,7 @@ app.use(cors())
 const http = require("http")
 const { Server } = require("socket.io")
 const server = http.createServer(app)
-const origin = 'https://whatchat.netlify.app'
-//const origin="http://localhost:5173"
+const origin = 'https://gglchat.netlify.app'
 const io = new Server(server, { cors: { origin: origin } })
 let list=[]
 
