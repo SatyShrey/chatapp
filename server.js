@@ -11,8 +11,7 @@ app.use(cors())
 const http = require("http")
 const { Server } = require("socket.io")
 const server = http.createServer(app)
-const origin = 'https://gglchat.netlify.app'
-//const origin="http://localhost:5173"
+const origin = ['https://gglchat.netlify.app',"http://localhost:5173"]
 const port=6060
 const io = new Server(server, { cors: { origin: origin } })
 
@@ -40,6 +39,17 @@ mongoClient.connect(conStr).then((client)=>{
         })
     })
 
+    app.post('/addmsg',(req,res)=>{
+        db.collection('chats').insertOne(req.body).then((data)=>{
+            res.send(data)
+        })
+    })
+
+    app.get('/chats/:id/:id2',(req,res)=>{
+        db.collection('chats').find({$or:[{p1:req.params.id,p2:req.params.id2},{p1:req.params.id2,p2:req.params.id}]})
+        .toArray().then(msgArray=>{if(msgArray[0]){res.send(msgArray)}})
+    })
+
 })
 //socket-io
 let onlineUsers=[]
@@ -64,7 +74,6 @@ io.on('connection',(socket)=>{
 app.get('/',(req,res)=>{
     res.send('Welcome')
 })
-
 
 //..............listen to the server at port 6060..................
 server.listen(port, () => { console.log(`server started at port:${port}`) })
