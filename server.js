@@ -65,10 +65,13 @@ mongoClient.connect(conStr).then((clientObject)=>{
     //login user id and password
     app.get('/login/:email/:password',(req,res)=>{
         db.collection('users').findOne({email:req.params.email}).then(async (data)=>{
+            
+           if(data){
             let hashPassword= await bcrypt.compare(req.params.password, data.password)
-           if(data && hashPassword){
-            res.send(data)
-           }else{res.end()}
+             if(hashPassword){res.send(data)}else{res.send('1')}
+           }else{
+            res.send('0')
+           }
         })
     });
     //view chats by ids
