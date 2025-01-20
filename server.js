@@ -1,79 +1,91 @@
 /* eslint-disable no-undef */
 
-const express = require("express")
-const app = express()
-app.use(express.urlencoded({ extended: true }))
-app.use(express.json())
-const cors = require("cors")
+//................initialize app..........................
+const express=require('express')
+const app=express()
+const cors=require('cors')
 app.use(cors())
-
-//...................socket.io global variables..................
-const http = require("http")
-const { Server } = require("socket.io")
-const server = http.createServer(app)
-const origin = ['https://gglchat.netlify.app',"http://localhost:5173"]
-const port=6060
-const io = new Server(server, { cors: { origin: origin } })
-
-//mongodb
+app.use(express.urlencoded({extended:true}))
+app.use(express.json())
+const path=require('path')
+//....................bcrypt..............................
+const bcrypt=require("bcrypt")
+//......................socket.io..........................
+const http=require('http')
+const{Server}=require('socket.io')
+const server=http.createServer(app)
+let onlineUsers=[]
+const io=new Server(server,{cors:{origin:"https://gglchat.netlify.app/"}})
+io.on('connection',(socket)=>{
+   const email=socket.handshake.query.email
+    socket.join(email)//join the personal room
+    onlineUsers.push(email);
+    io.to(email).emit('onlineUsers',onlineUsers)
+    socket.broadcast.emit('online',email)//send online status
+    //disconect message
+    socket.on('disconnect',()=>{
+        io.emit('offline',email)
+    })
+})
+//............default page.....................
+app.get('/',(req,res)=>{
+     res.sendFile('index2.html',{root:path.join(__dirname)},(err)=>{
+        if(err){console.error('Error:',err)}
+        else(console.log('File sent'))
+     })
+})
+//...................mongodb...............................
+//const conStr='mongodb://127.0.0.1:27017'
+const conStr="mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net"
 const mongoClient=require('mongodb').MongoClient
-const conStr='mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net/'
-mongoClient.connect(conStr).then((client)=>{
-    const db=client.db('gglchats')
-
+mongoClient.connect(conStr).then((clientObject)=>{
+    const db=clientObject.db('chatapp')
+    //get all users data
     app.get('/users',(req,res)=>{
-        db.collection('users').find({}).toArray().then(users=>{
-            if(users){res.send(users)}
-        })
-    })
-
-    app.get('/user/:uid',(req,res)=>{
-        db.collection('users').find({uid:req.params.uid}).toArray().then(users=>{
-            if(users){res.send(users[0])}
-        })
-    })
-
-    app.post('/adduser',(req,res)=>{
-        db.collection('users').insertOne(req.body).then((data)=>{
+        db.collection('users').find({}).toArray().then((users)=>{res.send(users)})
+    });
+    //get user by id
+    app.get('/user/:id',(req,res)=>{
+        db.collection('users').findOne({email:req.params.id}).then((user)=>res.send(user))
+    });
+    //add user(single)
+    app.post('/user', async (req,res)=>{
+        var hashPassword= await bcrypt.hash(req.body.password,10)
+        var newUser={
+            id:req.body.id,
+            name:req.body.name,
+            email:req.body.email,
+            password:hashPassword
+        }
+        db.collection('users').insertOne(newUser).then((data)=>{
+            data.info="Signup success!"
             res.send(data)
         })
-    })
-
-    app.post('/addmsg',(req,res)=>{
+    });
+    //login user id and password
+    app.get('/login/:email/:password',(req,res)=>{
+        db.collection('users').findOne({email:req.params.email}).then(async (data)=>{
+            let hashPassword= await bcrypt.compare(req.params.password, data.password)
+           if(data && hashPassword){
+            res.send(data)
+           }else{res.end()}
+        })
+    });
+    //view chats by ids
+    app.get('/chats/:email/',(req,res)=>{
+        db.collection('chats').find({$or:[{p1:req.params.email},{p2:req.params.email}]})
+        .toArray().then((chats)=>res.send(chats))
+    });
+    //add chat
+    app.post('/chat',(req,res)=>{
         db.collection('chats').insertOne(req.body).then((data)=>{
             res.send(data)
+            //send chat to receiver
+            io.to(req.body.p2).emit('chat',req.body)
         })
-    })
-
-    app.get('/chats/:id/:id2',(req,res)=>{
-        db.collection('chats').find({$or:[{p1:req.params.id,p2:req.params.id2},{p1:req.params.id2,p2:req.params.id}]})
-        .toArray().then(msgArray=>{if(msgArray[0]){res.send(msgArray)}})
-    })
-
+    });
+    
 })
-//socket-io
-let onlineUsers=[]
-io.on('connection',(socket)=>{
-    //online-user
-    socket.on('online',(data)=>{
-        onlineUsers.push(data)
-        io.emit('onlineList',onlineUsers)
-        //newMsg
-        socket.on('newMsg',(data)=>{
-            io.to(data.sid).emit('newMsg',data)
-        })
-        //disconnect
-       socket.on('disconnect',()=>{
-        onlineUsers=onlineUsers.filter(a=>a.uid!=data.uid)
-        io.emit('onlineList',onlineUsers)
-      })
-    })
-})
-
-//default page
-app.get('/',(req,res)=>{
-    res.send('Welcome')
-})
-
-//..............listen to the server at port 6060..................
-server.listen(port, () => { console.log(`server started at port:${port}`) })
+//listen to the server
+const port=6060
+server.listen(port,()=>{console.log(`Server started at port:${port}`)})
