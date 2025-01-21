@@ -15,9 +15,11 @@ const http=require('http')
 const{Server}=require('socket.io')
 const server=http.createServer(app)
 let onlineUsers=[]
+//...............allow cross origin resourse sharing.........
 const io=new Server(server,{cors:{
-   //origin:"https://gglchat.netlify.app"
-}})
+    //origin:"https://gglchat.netlify.app"
+    }});
+//.................connect to socket.................
 io.on('connection',(socket)=>{
    const email=socket.handshake.query.email
     socket.join(email)//join the personal room
@@ -27,6 +29,7 @@ io.on('connection',(socket)=>{
     //disconect message
     socket.on('disconnect',()=>{
         io.emit('offline',email)
+        onlineUsers=onlineUsers.filter((a)=>a !== email)
     })
 })
 //............default page.....................
@@ -37,8 +40,8 @@ app.get('/',(req,res)=>{
      })
 })
 //...................mongodb...............................
-//const conStr='mongodb://127.0.0.1:27017'
-const conStr="mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net"
+let conStr="mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net"
+    conStr='mongodb://127.0.0.1:27017'
 const mongoClient=require('mongodb').MongoClient
 mongoClient.connect(conStr).then((clientObject)=>{
     const db=clientObject.db('chatapp')
