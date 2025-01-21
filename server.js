@@ -15,7 +15,7 @@ const http=require('http')
 const{Server}=require('socket.io')
 const server=http.createServer(app)
 let onlineUsers=[]
-const io=new Server(server,{cors:{origin:"https://gglchat.netlify.app"}})
+const io=new Server(server,{cors:{origin:["https://gglchat.netlify.app","http://localhost:5173"]}})
 io.on('connection',(socket)=>{
    const email=socket.handshake.query.email
     socket.join(email)//join the personal room
