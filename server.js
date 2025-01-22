@@ -29,15 +29,15 @@ io.on('connection',(socket)=>{
     //disconect message
     socket.on('disconnect',()=>{
         io.emit('offline',email)
-        onlineUsers=onlineUsers.filter((a)=>a !== email)
+        onlineUsers.pop(email)
     })
 })
 //............default page.....................
 app.get('/',(req,res)=>{
      res.sendFile('index2.html',{root:path.join(__dirname)},(err)=>{
-        if(err){console.error('Error:',err)}
-        else(console.log('File sent'))
-     })
+        if(err){console.error('Error:',err);res.end()}
+        else{console.log('file sent:index2.html');res.end()}
+     });
 })
 //...................mongodb...............................
 let conStr="mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net"
