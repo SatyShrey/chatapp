@@ -41,17 +41,17 @@ app.get('/',(req,res)=>{
 })
 //...................mongodb...............................
 let conStr="mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net"
-    //conStr='mongodb://127.0.0.1:27017'
+    conStr='mongodb://127.0.0.1:27017'
 const mongoClient=require('mongodb').MongoClient
 mongoClient.connect(conStr).then((clientObject)=>{
     const db=clientObject.db('chatapp')
     //get all users data
     app.get('/users',(req,res)=>{
-        db.collection('users').find({}).toArray().then((users)=>{res.send(users)})
+        db.collection('users').find({}).toArray().then((users)=>{res.send(users);res.end()})
     });
     //get user by id
     app.get('/user/:id',(req,res)=>{
-        db.collection('users').findOne({email:req.params.id}).then((user)=>res.send(user))
+        db.collection('users').findOne({email:req.params.id}).then((user)=>{res.send(user);res.end()})
     });
     //add user(single)
     app.post('/user', async (req,res)=>{
@@ -64,7 +64,7 @@ mongoClient.connect(conStr).then((clientObject)=>{
         }
         db.collection('users').insertOne(newUser).then((data)=>{
             data.info="Signup success!"
-            res.send(data)
+            res.send(data);res.end()
         })
     });
     //login user id and password
@@ -73,23 +73,21 @@ mongoClient.connect(conStr).then((clientObject)=>{
             
            if(data){
             let hashPassword= await bcrypt.compare(req.params.password, data.password)
-             if(hashPassword){res.send(data)}else{res.send('1')}
-           }else{
-            res.send('0')
-           }
+             if(hashPassword){res.send(data);res.end()}else{res.send('1');res.end()}
+           }else{res.send('0');res.end()}
         })
     });
     //view chats by ids
     app.get('/chats/:email/',(req,res)=>{
         db.collection('chats').find({$or:[{p1:req.params.email},{p2:req.params.email}]})
-        .toArray().then((chats)=>res.send(chats))
+        .toArray().then((chats)=>{res.send(chats);res.end()})
     });
     //add chat
     app.post('/chat',(req,res)=>{
         db.collection('chats').insertOne(req.body).then((data)=>{
-            res.send(data)
             //send chat to receiver
             io.to(req.body.p2).emit('chat',req.body)
+            res.send(data);res.end()
         })
     });
     
