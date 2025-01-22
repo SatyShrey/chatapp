@@ -41,7 +41,7 @@ app.get('/',(req,res)=>{
 })
 //...................mongodb...............................
 let conStr="mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net"
-    conStr='mongodb://127.0.0.1:27017'
+    //conStr='mongodb://127.0.0.1:27017'
 const mongoClient=require('mongodb').MongoClient
 mongoClient.connect(conStr).then((clientObject)=>{
     const db=clientObject.db('chatapp')
