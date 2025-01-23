@@ -63,7 +63,7 @@ mongoClient.connect(conStr).then((clientObject)=>{
             password:hashPassword
         }
         db.collection('users').insertOne(newUser).then((data)=>{
-            data.info="Signup success!"
+            data.info="Signup success. You can login now!"
             res.send(data);res.end()
         })
     });
