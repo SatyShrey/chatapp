@@ -21,16 +21,18 @@ const io=new Server(server,{cors:{
     }});
 //.................connect to socket.................
 io.on('connection',(socket)=>{
-   const email=socket.handshake.query.email
-    socket.join(email)//join the personal room
-    onlineUsers.push(email);
-    io.to(email).emit('onlineUsers',onlineUsers)
-    socket.broadcast.emit('online',email)//send online status
-    //disconect message
-    socket.on('disconnect',()=>{
-        io.emit('offline',email)
-        onlineUsers.pop(email)
-    })
+   socket.on('online',(data)=>{
+    socket.join(data)//join the personal room
+    onlineUsers.push(data);
+    io.to(data).emit('onlineUsers',onlineUsers)
+    socket.broadcast.emit('online',data)//send online status
+     //disconect message
+     socket.on('disconnect',async()=>{
+        io.emit('offline',data)
+        onlineUsers.pop(data)
+    });
+   })
+   
 })
 //............default page.....................
 app.get('/',(req,res)=>{
