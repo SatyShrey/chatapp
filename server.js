@@ -19,21 +19,7 @@ let onlineUsers=[]
 const io=new Server(server,{cors:{
     //origin:"https://gglchat.netlify.app"
     }});
-//.................connect to socket.................
-io.on('connection',(socket)=>{
-   socket.on('online',(data)=>{
-    socket.join(data)//join the personal room
-    onlineUsers.push(data);
-    io.to(data).emit('onlineUsers',onlineUsers)
-    socket.broadcast.emit('online',data)//send online status
-     //disconect message
-     socket.on('disconnect',async()=>{
-        io.emit('offline',data)
-        onlineUsers.pop(data)
-    });
-   })
-   
-})
+
 //............default page.....................
 app.get('/',(req,res)=>{
      res.sendFile('index2.html',{root:path.join(__dirname)},(err)=>{
@@ -44,7 +30,7 @@ app.get('/',(req,res)=>{
 //...................mongodb...............................
 let conStr="mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net"
     //conStr='mongodb://127.0.0.1:27017'
-const mongoClient=require('mongodb').MongoClient
+const mongoClient=require('mongodb').MongoClient;
 mongoClient.connect(conStr).then((clientObject)=>{
     const db=clientObject.db('chatapp')
     //get all users data
@@ -54,6 +40,10 @@ mongoClient.connect(conStr).then((clientObject)=>{
     //get user by id
     app.get('/user/:id',(req,res)=>{
         db.collection('users').findOne({email:req.params.id}).then((user)=>{res.send(user);res.end()})
+    });
+    //get all secondary users
+    app.get('/users/:id',(req,res)=>{
+        db.collection('users').find({$nor:[{email:req.params.id}]}).toArray().then((users)=>{res.send(users);res.end()})
     });
     //add user(single)
     app.post('/user', async (req,res)=>{
@@ -84,15 +74,36 @@ mongoClient.connect(conStr).then((clientObject)=>{
         db.collection('chats').find({$or:[{p1:req.params.email},{p2:req.params.email}]})
         .toArray().then((chats)=>{res.send(chats);res.end()})
     });
-    //add chat
-    app.post('/chat',(req,res)=>{
+    
+})
+
+//.................connect to socket.................
+io.on('connection',(socket)=>{
+    const userId = socket.handshake.query.userId;
+    
+  // Emit the list of all rooms to the newly connected user
+    socket.emit('roomList', Array.from(io.sockets.adapter.rooms.keys()));
+
+    socket.join(userId);
+    // Broadcast the updated room list to all users when a new room is created
+    io.emit('roomList', Array.from(io.sockets.adapter.rooms.keys()));
+
+    mongoClient.connect(conStr).then((clientObject)=>{
+        const db=clientObject.db('chatapp')
+        //add chat
+       app.post('/chat',(req,res)=>{
         db.collection('chats').insertOne(req.body).then((data)=>{
             //send chat to receiver
-            io.to(req.body.p2).emit('chat',req.body)
-            res.send(data);res.end()
+            io.to(req.body.p2).emit('message', req.body);
+            res.send(req.body);res.end()
         })
     });
-    
+    })
+
+   // Broadcast the updated user list to all users when a user disconnects
+  socket.on('disconnect', () => {
+    io.emit('roomList', Array.from(io.sockets.adapter.rooms.keys()));
+  });
 })
 //listen to the server
 const port=6060
