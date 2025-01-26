@@ -15,6 +15,8 @@ const http=require('http')
 const{Server}=require('socket.io')
 const server=http.createServer(app)
 let onlineUsers=[]
+let conStr="mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net"
+    //conStr='mongodb://127.0.0.1:27017'
 //...............allow cross origin resourse sharing.........
 const io=new Server(server,{cors:{
     //origin:"https://gglchat.netlify.app"
@@ -24,7 +26,7 @@ const io=new Server(server,{cors:{
 const storage = multer.diskStorage({
     destination: './uploads/',
     filename: function(req, file, cb) {
-      cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+      cb(null, "Hi"+file.originalname.replace(path.extname(file.originalname),'') +""+ Date.now() + path.extname(file.originalname));
     }
   });
 // Initialize upload
@@ -72,8 +74,6 @@ app.get('/',(req,res)=>{
      });
 })
 //...................mongodb...............................
-let conStr="mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net"
-    //conStr='mongodb://127.0.0.1:27017'
 const mongoClient=require('mongodb').MongoClient;
 mongoClient.connect(conStr).then((clientObject)=>{
     const db=clientObject.db('chatapp')
@@ -96,7 +96,8 @@ mongoClient.connect(conStr).then((clientObject)=>{
             id:req.body.id,
             name:req.body.name,
             email:req.body.email,
-            password:hashPassword
+            password:hashPassword,
+            pic:req.body.pic
         }
         db.collection('users').insertOne(newUser).then((data)=>{
             data.info="Signup success. You can login now!"
@@ -155,10 +156,9 @@ io.on('connection',(socket)=>{
         } else {
           res.send(`File Uploaded: ${req.file.filename}`);
           const body={p1:req.params.p1,p2:req.params.p2,file:req.file.filename}
-          //send image link to self
-          io.to(req.params.p1).emit('message', body)
           //send chat to receiver
           io.to(req.params.p2).emit('message', body);
+          io.to(req.params.p1).emit('returnme', body);
           //add image chat
           mongoClient.connect(conStr).then((clientObject)=>{
             const db=clientObject.db('chatapp')
@@ -171,10 +171,24 @@ io.on('connection',(socket)=>{
     });
   });
 
-
    // Broadcast the updated user list to all users when a user disconnects
   socket.on('disconnect', () => {
     io.emit('roomList', Array.from(io.sockets.adapter.rooms.keys()));
+  });
+})
+
+//set profile pic
+app.post('/setprofilepic',(req,res)=>{
+  upload(req, res, (err) => {
+    if (err) {
+      res.send(err.message);
+    } else {
+      if (req.file == undefined) {
+        res.send('Error: No File Selected!');
+      } else {
+        res.send({result:'success',file:req.file.filename})
+      }
+    }
   });
 })
 //listen to the server
