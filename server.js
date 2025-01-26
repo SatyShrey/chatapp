@@ -16,7 +16,7 @@ const http=require('http')
 const{Server}=require('socket.io')
 const server=http.createServer(app)
 let onlineUsers=[]
-let conStr=process.env.MongoURL
+let conStr="mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net/"
 //...............allow cross origin resourse sharing.........
 const io=new Server(server,{cors:{}});
 
