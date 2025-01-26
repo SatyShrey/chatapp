@@ -1,5 +1,6 @@
 
 //................initialize app..........................
+require('dotenv').config();
 const express=require('express')
 const app=express()
 const cors=require('cors')
@@ -15,12 +16,9 @@ const http=require('http')
 const{Server}=require('socket.io')
 const server=http.createServer(app)
 let onlineUsers=[]
-let conStr="mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net"
-    //conStr='mongodb://127.0.0.1:27017'
+let conStr=process.env.MongoURL
 //...............allow cross origin resourse sharing.........
-const io=new Server(server,{cors:{
-    //origin:"https://gglchat.netlify.app"
-    }});
+const io=new Server(server,{cors:{}});
 
 // Set storage engine
 const storage = multer.diskStorage({
@@ -192,5 +190,5 @@ app.post('/setprofilepic',(req,res)=>{
   });
 })
 //listen to the server
-const port=6060
+const port=process.env.PORT
 server.listen(port,()=>{console.log(`Server started at port:${port}`)})
