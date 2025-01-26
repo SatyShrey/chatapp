@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 
 //................initialize app..........................
 const express=require('express')
@@ -7,7 +6,8 @@ const cors=require('cors')
 app.use(cors())
 app.use(express.urlencoded({extended:true}))
 app.use(express.json())
-const path=require('path')
+const path=require('path');
+const multer = require('multer');
 //....................bcrypt..............................
 const bcrypt=require("bcrypt")
 //......................socket.io..........................
@@ -20,6 +20,50 @@ const io=new Server(server,{cors:{
     //origin:"https://gglchat.netlify.app"
     }});
 
+// Set storage engine
+const storage = multer.diskStorage({
+    destination: './uploads/',
+    filename: function(req, file, cb) {
+      cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+    }
+  });
+// Initialize upload
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 1000000 }, // Limit file size to 1MB
+    fileFilter: function(req, file, cb) {
+      checkFileType(file, cb);
+    }
+  }).single('photo');
+  // Check file type
+function checkFileType(file, cb) {
+    const filetypes = /jpeg|jpg|png|gif/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype);
+  
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb('Error: Images Only!');
+    }
+  }
+  
+  //dodnload the photo
+  // Serve the uploaded files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Endpoint to download a photo
+app.get('/download/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, 'uploads', filename);
+  res.download(filePath, (err) => {
+    if (err) {
+      console.error('Error downloading file:', err);
+      res.status(500).send('Error downloading file');
+      res.end()
+    }
+  });
+});
 //............default page.....................
 app.get('/',(req,res)=>{
      res.sendFile('index2.html',{root:path.join(__dirname)},(err)=>{
@@ -99,6 +143,34 @@ io.on('connection',(socket)=>{
         })
     });
     })
+
+    // Route to upload photo
+  app.post('/upload/:p1/:p2', (req, res) => {
+    upload(req, res, (err) => {
+      if (err) {
+        res.send(err);
+      } else {
+        if (req.file == undefined) {
+          res.send('Error: No File Selected!');
+        } else {
+          res.send(`File Uploaded: ${req.file.filename}`);
+          const body={p1:req.params.p1,p2:req.params.p2,file:req.file.filename}
+          //send image link to self
+          io.to(req.params.p1).emit('message', body)
+          //send chat to receiver
+          io.to(req.params.p2).emit('message', body);
+          //add image chat
+          mongoClient.connect(conStr).then((clientObject)=>{
+            const db=clientObject.db('chatapp')
+            db.collection('chats').insertOne(body).then((data)=>{
+                res.end()
+            })
+        })
+        }
+      }
+    });
+  });
+
 
    // Broadcast the updated user list to all users when a user disconnects
   socket.on('disconnect', () => {
