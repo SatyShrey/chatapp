@@ -190,5 +190,5 @@ app.post('/setprofilepic',(req,res)=>{
   });
 })
 //listen to the server
-const port=process.env.PORT
+const port=6060
 server.listen(port,()=>{console.log(`Server started at port:${port}`)})
