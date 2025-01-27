@@ -24,7 +24,7 @@ const io=new Server(server,{cors:{}});
 const storage = multer.diskStorage({
     destination: './uploads/',
     filename: function(req, file, cb) {
-      cb(null, "Hi"+ Date.now() + file.originalname;
+      cb(null, "Hi"+ Date.now() + file.originalname);
     }
   });
 // Initialize upload
