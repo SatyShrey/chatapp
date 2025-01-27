@@ -16,7 +16,8 @@ const http=require('http')
 const{Server}=require('socket.io')
 const server=http.createServer(app)
 let onlineUsers=[]
-let conStr="mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net/"
+let conStr="mongodb://127.0.0.1:27017"
+    conStr="mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net/"
 //...............allow cross origin resourse sharing.........
 const io=new Server(server,{cors:{}});
 
@@ -24,7 +25,7 @@ const io=new Server(server,{cors:{}});
 const storage = multer.diskStorage({
     destination: './uploads/',
     filename: function(req, file, cb) {
-      cb(null, "Hi"+ Date.now() + file.originalname);
+      cb(null, "Hi"+file.originalname.replace(path.extname(file.originalname),'') +""+ Date.now() + path.extname(file.originalname));
     }
   });
 // Initialize upload
@@ -77,15 +78,21 @@ mongoClient.connect(conStr).then((clientObject)=>{
     const db=clientObject.db('chatapp')
     //get all users data
     app.get('/users',(req,res)=>{
-        db.collection('users').find({}).toArray().then((users)=>{res.send(users);res.end()})
+        db.collection('users').find({}).toArray()
+        .then((users)=>{res.send(users);res.end()})
+        .catch((er)=>{console.log(er)})
     });
     //get user by id
     app.get('/user/:id',(req,res)=>{
-        db.collection('users').findOne({email:req.params.id}).then((user)=>{res.send(user);res.end()})
+        db.collection('users').findOne({email:req.params.id})
+        .then((user)=>{res.send(user);res.end()})
+        .catch((er)=>{console.log(er)})
     });
     //get all secondary users
     app.get('/users/:id',(req,res)=>{
-        db.collection('users').find({$nor:[{email:req.params.id}]}).toArray().then((users)=>{res.send(users);res.end()})
+        db.collection('users').find({$nor:[{email:req.params.id}]}).toArray()
+        .then((users)=>{res.send(users);res.end()})
+        .catch((er)=>{console.log(er)})
     });
     //add user(single)
     app.post('/user', async (req,res)=>{
@@ -101,21 +108,46 @@ mongoClient.connect(conStr).then((clientObject)=>{
             data.info="Signup success. You can login now!"
             res.send(data);res.end()
         })
+        .catch((er)=>{console.log(er)})
     });
     //login user id and password
     app.get('/login/:email/:password',(req,res)=>{
         db.collection('users').findOne({email:req.params.email}).then(async (data)=>{
-            
            if(data){
-            let hashPassword= await bcrypt.compare(req.params.password, data.password)
-             if(hashPassword){res.send(data);res.end()}else{res.send('1');res.end()}
-           }else{res.send('0');res.end()}
+            const hashPassword = await bcrypt.compare(req.params.password, data.password)
+            if(hashPassword){data.result= "success";res.send(data);res.end()}
+            else{res.send("Error: Invalid credentials");res.end()}
+           }else{res.send("Error: User not found");res.end()}
         })
+        .catch((er)=>{console.log(er)})
     });
     //view chats by ids
     app.get('/chats/:email/',(req,res)=>{
         db.collection('chats').find({$or:[{p1:req.params.email},{p2:req.params.email}]})
         .toArray().then((chats)=>{res.send(chats);res.end()})
+        .catch((er)=>{console.log(er)})
+    });
+    //delete user
+    app.delete('/deleteuser/:email',(req,res)=>{
+      db.collection('users').deleteOne({email:req.params.email})
+      .then(()=>{res.send('User deleted successfully!!');res.end()})
+      .catch((er)=>{console.log(er)})
+    });
+    //update name
+    app.put('/updatename/:email/:newname',(req,res)=>{
+      db.collection('users').updateOne({email:req.params.email},{$set:{name:req.params.newname}})
+      .then(()=>{res.send("Name changed successfully!!")})
+    });
+    //update password
+    app.put('/updatepassword/:email/:newpassword',async (req,res)=>{
+      var hashPassword= await bcrypt.hash(req.params.newpassword,10)
+      db.collection('users').updateOne({email:req.params.email},{$set:{password:hashPassword}})
+      .then(()=>{res.send("Password changed successfully!!");res.end()})
+    });
+    //update profile pic
+    app.put('/updatepic/:email/:newpic',(req,res)=>{
+      db.collection('users').updateOne({email:req.params.email},{$set:{pic:req.params.newpic}})
+      .then(()=>{res.send("Profile pic changed successfully!!");res.end()})
     });
     
 })
