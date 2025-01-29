@@ -224,7 +224,7 @@ app.delete('/delete/:filename', (req, res) => {
   });
 });
 //......................delete all from sub folder........................
-app.delete('/deleteall/:fubfolder', (req, res) => {
+app.get('/deleteall/:fubfolder', (req, res) => {
   const directory = path.join(__dirname, 'uploads/'+req.params.fubfolder);
   fs.readdir(directory, (err, files) => {
     if (err) throw err;
