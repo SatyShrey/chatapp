@@ -194,6 +194,7 @@ app.get('/files/:folder/:subfolder', (req, res) => {
       return res.status(500).send('Unable to scan directory: ' + err);
     }
     res.send(files);
+    res.end();
   });
 });
 //.................from folder.................................
@@ -204,6 +205,7 @@ app.get('/files/:folder', (req, res) => {
       return res.status(500).send('Unable to scan directory: ' + err);
     }
     res.send(files);
+    res.end();
   });
 });
 //...................delete a file from server...................
@@ -218,6 +220,7 @@ app.delete('/delete/:filename', (req, res) => {
       return res.status(500).send('Error deleting file');
     }
     res.send(`File ${filename} deleted successfully`);
+    res.end();
   });
 });
 //......................delete all from sub folder........................
@@ -228,7 +231,7 @@ app.delete('/deleteall/:fubfolder', (req, res) => {
     for (const file of files) {
       fs.unlink(path.join(directory, file), err => {
         if (err) throw err;
-        res.send('All files from subfolder '+req.params.fubfolder+" deleted.")
+        res.send('All files from subfolder '+req.params.fubfolder+" deleted.");
         res.end()
       });
     }
