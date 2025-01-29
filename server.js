@@ -141,7 +141,7 @@ mongoClient.connect(conStr).then((clientObject) => {
   //update name
   app.put('/updatename/:email/:newname', (req, res) => {
     db.collection('users').updateOne({ email: req.params.email }, { $set: { name: req.params.newname } })
-      .then(() => { res.send("Name changed successfully!!") })
+      .then(() => { res.send("Name changed successfully!!") ;res.end()})
   });
   //update password
   app.put('/updatepassword/:email/:newpassword', async (req, res) => {
