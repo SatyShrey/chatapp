@@ -10,13 +10,13 @@ app.use(express.json())
 const path = require('path');
 const multer = require('multer');
 let conStr = "mongodb://127.0.0.1:27017"
-conStr="mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net/"
+conStr = "mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net/"
 const bcrypt = require("bcrypt")
 const http = require('http')
 const { Server } = require('socket.io')
 const server = http.createServer(app)
 const io = new Server(server, { cors: {} });
-
+const fs = require('fs');
 
 // Check file type
 function checkFileType(file, cb) {
@@ -31,8 +31,8 @@ function checkFileType(file, cb) {
   }
 }
 //......a function for upload image.........
-function uploadImage(req,res,folder,filename) {
-   // Set storage engine
+function uploadImage(req, res, folder, filename) {
+  // Set storage engine
   const storage = multer.diskStorage({
     destination: `./uploads/${folder}/`,
     filename: function (req, file, cb) {
@@ -48,12 +48,12 @@ function uploadImage(req,res,folder,filename) {
     }
   }).single('photo');
   //upload the file
-   upload(req, res, (err) => {
+  upload(req, res, (err) => {
     if (err) {
-      return({result:"error",message:err.message});
+      return ({ result: "error", message: err.message });
     } else {
       if (req.file == undefined) {
-        res.send({result:"error",message:"No file selected"});
+        res.send({ result: "error", message: "No file selected" });
       } else {
         res.send({ result: 'success', file: req.file.filename })
       }
@@ -63,7 +63,7 @@ function uploadImage(req,res,folder,filename) {
 
 //rout for upload pic
 app.post('/upload/:folder/:filename', (req, res) => {
-   uploadImage(req,res,req.params.folder,req.params.filename)
+  uploadImage(req, res, req.params.folder, req.params.filename)
 })
 
 // Serve the uploaded files
@@ -183,8 +183,58 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     io.emit('roomList', Array.from(io.sockets.adapter.rooms.keys()));
   });
-})
+});
 
+
+//.....................view all files............................................................................
+app.get('/files/:folder/:subfolder', (req, res) => {
+  const uploadsDir = path.join(__dirname, req.params.folder + "/" + req.params.subfolder);
+  fs.readdir(uploadsDir, (err, files) => {
+    if (err) {
+      return res.status(500).send('Unable to scan directory: ' + err);
+    }
+    res.send(files);
+  });
+});
+//.................from folder.................................
+app.get('/files/:folder', (req, res) => {
+  const uploadsDir = path.join(__dirname, req.params.folder);
+  fs.readdir(uploadsDir, (err, files) => {
+    if (err) {
+      return res.status(500).send('Unable to scan directory: ' + err);
+    }
+    res.send(files);
+  });
+});
+//...................delete a file from server...................
+const uploadsDir = path.join(__dirname, 'uploads/pics');
+app.delete('/delete/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(uploadsDir, filename);
+
+  fs.unlink(filePath, (err) => {
+    if (err) {
+      console.error('Error deleting file:', err);
+      return res.status(500).send('Error deleting file');
+    }
+    res.send(`File ${filename} deleted successfully`);
+  });
+});
+//......................delete all from sub folder........................
+app.delete('/deleteall/:fubfolder', (req, res) => {
+  const directory = path.join(__dirname, 'uploads/'+req.params.fubfolder);
+  fs.readdir(directory, (err, files) => {
+    if (err) throw err;
+    for (const file of files) {
+      fs.unlink(path.join(directory, file), err => {
+        if (err) throw err;
+        res.send('All files from subfolder '+req.params.fubfolder+" deleted.")
+        res.end()
+      });
+    }
+
+  });
+})
 //listen to the server
 const port = 6060
 server.listen(port, () => { console.log(`Server started at port:${port}`) })
