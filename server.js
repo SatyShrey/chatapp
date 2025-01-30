@@ -145,11 +145,11 @@ mongoClient.connect(conStr).then((clientObject) => {
         res.send("Profile pic changed successfully!!") 
         const directory = path.join(__dirname, 'uploads/users');
         const recetFile=req.params.newpic;
-
+        const email=req.params.email;
         fs.readdir(directory, (err, files) => {
           if (err) throw err;
           files.forEach(file => {
-            if (file.startsWith('satya') && file !== recetFile) {
+            if (file.startsWith(email) && file !== recetFile) {
               fs.unlink(path.join(directory, file), err => {
                 if (err) throw err;
                 res.end()
