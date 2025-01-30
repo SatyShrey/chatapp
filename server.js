@@ -138,10 +138,31 @@ mongoClient.connect(conStr).then((clientObject) => {
       .then(() => { res.send('User deleted successfully!!'); res.end() })
       .catch((er) => { console.log(er) })
   });
+  //update image name
+  app.put('/updatepic/:email/:newpic', (req, res) => {
+    db.collection('users').updateOne({ email: req.params.email }, { $set: { pic: req.params.newpic } })
+      .then(() => {
+        res.send("Profile pic changed successfully!!") 
+        const directory = path.join(__dirname, 'uploads/users');
+        const recetFile=req.params.newpic;
+
+        fs.readdir(directory, (err, files) => {
+          if (err) throw err;
+          files.forEach(file => {
+            if (file.startsWith('satya') && file !== recetFile) {
+              fs.unlink(path.join(directory, file), err => {
+                if (err) throw err;
+                res.end()
+              });
+            }
+          });
+        });
+      })
+  });
   //update name
   app.put('/updatename/:email/:newname', (req, res) => {
     db.collection('users').updateOne({ email: req.params.email }, { $set: { name: req.params.newname } })
-      .then(() => { res.send("Name changed successfully!!") ;res.end()})
+      .then(() => { res.send("Name changed successfully!!") })
   });
   //update password
   app.put('/updatepassword/:email/:newpassword', async (req, res) => {
@@ -194,10 +215,9 @@ app.get('/files/:folder/:subfolder', (req, res) => {
       return res.status(500).send('Unable to scan directory: ' + err);
     }
     res.send(files);
-    res.end();
   });
 });
-//.................from folder.................................
+//................. files from folder.................................
 app.get('/files/:folder', (req, res) => {
   const uploadsDir = path.join(__dirname, req.params.folder);
   fs.readdir(uploadsDir, (err, files) => {
@@ -205,7 +225,6 @@ app.get('/files/:folder', (req, res) => {
       return res.status(500).send('Unable to scan directory: ' + err);
     }
     res.send(files);
-    res.end();
   });
 });
 //...................delete a file from server...................
@@ -220,18 +239,17 @@ app.delete('/delete/:filename', (req, res) => {
       return res.status(500).send('Error deleting file');
     }
     res.send(`File ${filename} deleted successfully`);
-    res.end();
   });
 });
 //......................delete all from sub folder........................
-app.get('/deleteall/:fubfolder', (req, res) => {
-  const directory = path.join(__dirname, 'uploads/'+req.params.fubfolder);
+app.delete('/deleteall/:fubfolder', (req, res) => {
+  const directory = path.join(__dirname, 'uploads/' + req.params.fubfolder);
   fs.readdir(directory, (err, files) => {
     if (err) throw err;
     for (const file of files) {
       fs.unlink(path.join(directory, file), err => {
         if (err) throw err;
-        res.send('All files from subfolder '+req.params.fubfolder+" deleted.");
+        res.send('All files from subfolder ' + req.params.fubfolder + " deleted.")
         res.end()
       });
     }
