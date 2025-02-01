@@ -10,7 +10,7 @@ app.use(express.json())
 const path = require('path');
 const multer = require('multer');
 let conStr = "mongodb://127.0.0.1:27017"
-//conStr = "mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net/"
+conStr = "mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net/"
 const bcrypt = require("bcrypt")
 const http = require('http')
 const { Server } = require('socket.io')
