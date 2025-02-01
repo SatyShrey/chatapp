@@ -11,6 +11,8 @@ const path = require('path');
 const multer = require('multer');
 let conStr = "mongodb://127.0.0.1:27017"
 conStr = "mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net/"
+let userpicfolder="http://localhost/6060/uploads/users/"
+userpicfolder="https://chatapp-vspu.onrender.com/uploads/users"
 const bcrypt = require("bcrypt")
 const http = require('http')
 const { Server } = require('socket.io')
@@ -146,7 +148,7 @@ mongoClient.connect(conStr).then((clientObject) => {
   });
   //update image name
   app.put('/updatepic/:email/:newpic', (req, res) => {
-    db.collection('users').updateOne({ email: req.params.email }, { $set: { pic: req.params.newpic } })
+    db.collection('users').updateOne({ email: req.params.email }, { $set: { pic:userpicfolder+req.params.newpic } })
       .then(() => {
         res.send("Profile pic changed successfully!!") 
         const directory = path.join(__dirname, 'uploads/users');
