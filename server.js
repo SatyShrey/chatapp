@@ -10,7 +10,7 @@ app.use(express.json())
 const path = require('path');
 const multer = require('multer');
 let conStr = "mongodb://127.0.0.1:27017"
-conStr = "mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net/"
+//conStr = "mongodb+srv://sndsatya:QtAy7QbfwCnzUhvu@clustersnd.adfao0n.mongodb.net/"
 const bcrypt = require("bcrypt")
 const http = require('http')
 const { Server } = require('socket.io')
@@ -72,6 +72,12 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 //............default page.....................
 app.get('/', (req, res) => {
   res.sendFile('index2.html', { root: path.join(__dirname) }, (err) => {
+    if (err) { console.error('Error:', err); res.end() }
+    else { console.log('file sent:index2.html'); res.end() }
+  });
+})
+app.get('/resources/:id', (req, res) => {
+  res.sendFile(req.params.id, { root: path.join(__dirname) }, (err) => {
     if (err) { console.error('Error:', err); res.end() }
     else { console.log('file sent:index2.html'); res.end() }
   });
@@ -227,6 +233,16 @@ app.get('/files/:folder', (req, res) => {
     res.send(files);
   });
 });
+//.................single file.................................
+app.get('/files/:folder/:subfolder/:filename', (req, res) => {
+  const uploadsDir = path.join(__dirname, req.params.folder + "/" + req.params.subfolder);
+  fs.readdir(uploadsDir, (err, files) => {
+    if (err) {
+      return res.status(500).send('Unable to scan directory: ' + err);
+    }
+    res.send(files.filter(a=>a==req.params.filename));
+  });
+});
 //...................delete a file from server...................
 const uploadsDir = path.join(__dirname, 'uploads/pics');
 app.delete('/delete/:filename', (req, res) => {
@@ -256,6 +272,7 @@ app.delete('/deleteall/:fubfolder', (req, res) => {
 
   });
 })
+
 //listen to the server
 const port = 6060
 server.listen(port, () => { console.log(`Server started at port:${port}`) })
