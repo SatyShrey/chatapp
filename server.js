@@ -86,6 +86,13 @@ mongoClient.connect(conStr).then((clientObject) => {
             .catch((er) => { console.log(er) })
     });
 
+    //add a user
+    app.post('/user',(req,res)=>{
+        db.collection('users').insertOne(req.body)
+        .then(() => { res.send("Your default password is 1234 you can change it in profile section.")})
+        .catch((er) => { console.log(er) })
+    });
+
     //get user by id
     app.get('/user/:id', (req, res) => {
         db.collection('users').findOne({ email: req.params.id })
