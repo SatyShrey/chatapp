@@ -97,7 +97,7 @@ mongoClient.connect(conStr).then((clientObject) => {
         pic: req.body.pic
      }
         db.collection('users').insertOne(newUser)
-        .then(() => { res.send("Your default password is 1234. You can change it in profile section.")})
+        .then(() => { res.send(`Your default password is "1234". You can change it in profile section.`)})
         .catch((er) => { console.log(er) })
     });
 
