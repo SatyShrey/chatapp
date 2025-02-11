@@ -87,9 +87,17 @@ mongoClient.connect(conStr).then((clientObject) => {
     });
 
     //add a user
-    app.post('/user',(req,res)=>{
-        db.collection('users').insertOne(req.body)
-        .then(() => { res.send(`Your default password is "1234". You can change it in profile section.`)})
+    app.post('/user',async(req,res)=>{
+        var hashPassword = await bcrypt.hash(req.body.password, 10)
+        var newUser = {
+        id: req.body.id,
+        name: req.body.name,
+        email: req.body.email,
+        password: hashPassword,
+        pic: req.body.pic
+     }
+        db.collection('users').insertOne(newUser)
+        .then(() => { res.send("Your default password is 1234. You can change it in profile section.")})
         .catch((er) => { console.log(er) })
     });
 
