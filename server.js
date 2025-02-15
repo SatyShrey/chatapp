@@ -203,32 +203,17 @@ io.on('connection', (socket) => {
         
         //add chat
         app.post('/chat', (req, res) => {
-             if(req.body.file){
-                const resources = './uploads/pics/'+ req.body.file
-                const picname = req.body.file
+            var  body=req.body
+                const resources = './uploads/pics/'+ body.file
+                const picname = body.file
                 uploadImageCloudinary(resources,picname).then(async(data)=>{
-                    var body={
-                        p1:req.body.p1,
-                        p2:req.body.p2,
-                        smg:req.body.msg,
-                        file:data.url
-                    }
+                    body.file=await data.url
                     db.collection('chats').insertOne(body).then(() => {
                         //send chat to receiver
                         io.to(req.body.p2).emit('message', body);
                         res.send(body); res.end()
                     })
                 })
-                
-            }
-            else{
-                db.collection('chats').insertOne(req.body).then(() => {
-                    //send chat to receiver
-                    io.to(req.body.p2).emit('message', req.body);
-                    res.send(req.body); res.end()
-                })
-            }
-           
         });
     })
 

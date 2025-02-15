@@ -11,7 +11,8 @@ v2.config({
 
 // Upload an image
 async function uploadImage(image_address, image_id) {
-    const uploadResult = await v2.uploader
+    if(image_id){
+        const uploadResult = await v2.uploader
         .upload(
             image_address, {
             public_id: image_id,
@@ -22,6 +23,10 @@ async function uploadImage(image_address, image_id) {
         });
     
     return uploadResult;
+    }
+    else {
+        return {url:''}
+    }
 }
 
 module.exports = uploadImage
