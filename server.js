@@ -220,6 +220,13 @@ io.on('connection', (socket) => {
     // Broadcast the updated user list to all users when a user disconnects
     socket.on('disconnect', () => {
         io.emit('roomList', Array.from(io.sockets.adapter.rooms.keys()));
+        
+        //update online status
+        mongoClient.connect(conStr).then(clientObject=>{
+        const db=clientObject.db('chatapp')
+        db.collection('users').updateOne({ email: userId }, { $set: { lastseen: new Date().toLocaleString() } })
+        console.log(new Date().toLocaleString())
+        })
     });
 });
 
