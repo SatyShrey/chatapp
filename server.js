@@ -223,9 +223,9 @@ io.on('connection', (socket) => {
         
         //update online status
         mongoClient.connect(conStr).then(clientObject=>{
-        const db=clientObject.db('chatapp')
-        db.collection('users').updateOne({ email: userId }, { $set: { lastseen: new Date().toLocaleString() } })
-        console.log(new Date().toLocaleString())
+        const db=clientObject.db('chatapp');
+        const lastseen=new Date().toDateString()+ ' '+new Date().toLocaleTimeString()
+        db.collection('users').updateOne({ email: userId }, { $set: { lastseen: lastseen } });
         })
     });
 });
